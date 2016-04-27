@@ -5,7 +5,7 @@ This is an *experimental* project, it reports realtime user object creation in J
 Note: 
 
  - It is based on [heapTracker](http://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/demo/jvmti/heapTracker/heapTracker.c) example from JDK 
- - It is NOT advisable to use it in production
+ - do NOT use it in production
 
 
 ## Setup
