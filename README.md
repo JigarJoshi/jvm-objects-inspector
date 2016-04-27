@@ -1,4 +1,4 @@
-# JVM Inspector
+# JVM Object Inspector
 
 This is an *experimental* project, it reports realtime user object creation in JVM and indexes it into Elasticsearch, Purpose of the project is to identify memory leak and study object life cycle for any app
 
