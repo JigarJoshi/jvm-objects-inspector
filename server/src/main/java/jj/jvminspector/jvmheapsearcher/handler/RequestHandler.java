@@ -17,7 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 
 import jj.jvminspector.jvmheapsearcher.processor.Processor;
-import jj.jvminspector.jvmheapsearcher.processor.impl.ElasticsearchProcessor;
+import jj.jvminspector.jvmheapsearcher.processor.ProcessorFactory;
 
 public class RequestHandler extends Thread {
 	private final Socket socket;
@@ -30,9 +30,9 @@ public class RequestHandler extends Thread {
 		this.config = config;
 		this.socket = socketArg;
 		this.queue = new LinkedBlockingQueue<>();
-		this.processor = new ElasticsearchProcessor(queue);
+		this.processor = ProcessorFactory.getProcessor(queue, config);
 		int requestHandlerConcurrency = config.getInt("request.handler.concurrency", 2);
-		new Threader(requestHandlerConcurrency).submit(this.processor.getClass().getName(), new ElasticsearchProcessor(queue));
+		new Threader(requestHandlerConcurrency).submit(this.processor.getClass().getName(), processor);
 
 	}
 

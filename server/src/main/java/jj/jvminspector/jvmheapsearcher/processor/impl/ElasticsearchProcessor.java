@@ -8,6 +8,7 @@ import com.lithium.flow.table.ElasticTable;
 import com.lithium.flow.table.Key;
 import com.lithium.flow.table.Row;
 import com.lithium.flow.util.ElasticUtils;
+import com.lithium.flow.util.Logs;
 import com.lithium.flow.util.Main;
 import com.lithium.flow.util.Sleep;
 
@@ -30,7 +31,7 @@ import jj.jvminspector.jvmheapsearcher.processor.Processor;
 
 
 public class ElasticsearchProcessor implements Processor {
-	private final static Logger log = LoggerFactory.getLogger(ElasticsearchProcessor.class);
+	private final static Logger log = Logs.getLogger();
 	private BlockingQueue<String> inputQueue;
 	private Gson gson;
 	private Client client;
@@ -44,7 +45,7 @@ public class ElasticsearchProcessor implements Processor {
 		client = ElasticUtils.buildClient(config);
 		index = config.prefix("elastic").getString("index");
 		table = new ElasticTable(client, index, "memory");
-
+		log.info("initialized ElasticsearchProcessor");
 	}
 
 	@Override

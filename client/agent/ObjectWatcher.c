@@ -14,7 +14,7 @@
 #include "agent_util.h"
 
 #include <stdio.h>
-#include <string.h> 
+#include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
@@ -118,14 +118,14 @@ static void initiateSocketConnection() {
     if (gdata->socket_desc == -1) {
         printf("could not create socket");
     }
-    printf("connecting to %s:%d", gdata->serverHostname, gdata->port);
+    printf("connecting to %s:%d \n", gdata->serverHostname, gdata->port);
     gdata->server.sin_addr.s_addr = inet_addr(gdata->serverHostname);
     gdata->server.sin_family = AF_INET;
     gdata->server.sin_port = htons(gdata->port);
 
     //Connect to remote server
     if (connect(gdata->socket_desc, (struct sockaddr *) &gdata->server, sizeof (gdata->server)) < 0) {
-        puts("connect error");
+        puts("connect error\n");
         return;
     }
 
@@ -138,18 +138,16 @@ static void initiateSocketConnection() {
  */
 static void
 flushToSocket(char* message) {
-    //puts(message);
-    //printf("\n%s\n", message);
-    //if (send(gdata->socket_desc, message, strlen(message), 0) < 0) {
-    //    puts("Send failed");
-    //   return;
-    // }
+    if (send(gdata->socket_desc, message, strlen(message), 0) < 0) {
+        puts("Send failed");
+        return;
+    }
 }
 
 /**
  * Returns empty stacktrace
  * @param flavor
- * @return 
+ * @return
  */
 static TraceInfo *
 emptyTrace(TraceFlavor flavor) {
@@ -253,7 +251,7 @@ frameToString(jvmtiEnv *jvmti, char *buf, int buflen, jvmtiFrameInfo *finfo) {
 
 /**
  * Gets current time in millisecond
- * @return 
+ * @return
  */
 static jlong
 getTime() {
@@ -267,7 +265,7 @@ getTime() {
  * Constructs TraceInfo
  * @param trace
  * @param flavor
- * @return 
+ * @return
  */
 static TraceInfo *
 constructTraceInfo(Trace *trace, TraceFlavor flavor) {
@@ -287,7 +285,7 @@ constructTraceInfo(Trace *trace, TraceFlavor flavor) {
 
 /**
  * prints traceinfo
- * 
+ *
  * @param jvmti
  * @param tinfo
  * @param stringData
@@ -314,17 +312,14 @@ printTraceInfo(jvmtiEnv *jvmti, TraceInfo* tinfo, char* stringData) {
                 continue;
             }
             fcount++;
-            //stdout_message("%s--", buf);
             strcat(stringData, buf);
             if (i < (tinfo->trace.numberOfFrames - 1)) {
                 //stdout_message(",");
                 strcat(stringData, ",\0");
             }
-            //deallocate(gdata->jvmti, buf);
         }
         strcat(stringData, "\n\0");
     } else {
-        //stdout_message("<empty>\n");
         strcpy(stringData, "<empty>\n\0");
     }
 }
@@ -362,7 +357,6 @@ eventAllocation(TraceInfo *tinfo) {
     deallocate(gdata->jvmti, entireMessage);
     deallocate(gdata->jvmti, headerPart);
     deallocate(gdata->jvmti, stringData);
-
 }
 
 /**
@@ -370,7 +364,7 @@ eventAllocation(TraceInfo *tinfo) {
  * @param jvmti
  * @param trace
  * @param flavor
- * @return 
+ * @return
  */
 static TraceInfo *
 processTrace(jvmtiEnv *jvmti, Trace *trace, TraceFlavor flavor) {
@@ -389,7 +383,7 @@ processTrace(jvmtiEnv *jvmti, Trace *trace, TraceFlavor flavor) {
  * @param jvmti
  * @param thread
  * @param flavor
- * @return 
+ * @return
  */
 static TraceInfo *
 getTraceInfo(jvmtiEnv *jvmti, jthread thread, TraceFlavor flavor) {
@@ -420,6 +414,7 @@ getTraceInfo(jvmtiEnv *jvmti, jthread thread, TraceFlavor flavor) {
     } else {
         // If thread==NULL, it's assumed this is before VM_START
         if (flavor == TRACE_USER) {
+            // TODO: take care of these later
             //tinfo = emptyTrace(TRACE_BEFORE_VM_START);
         } else {
             //tinfo = emptyTrace(flavor);
@@ -462,7 +457,6 @@ HEAP_TRACKER_native_newobj(JNIEnv *env, jclass klass, jthread thread, jobject o)
         tagObjectWithId(gdata->jvmti, o, tinfo);
         (void) free((TraceInfo*) tinfo);
     }
-    //deallocate(gdata->jvmti, tinfo);   
 }
 
 /**
@@ -480,8 +474,10 @@ HEAP_TRACKER_native_newarr(JNIEnv *env, jclass klass, jthread thread, jobject a)
         return;
     }
     tinfo = getTraceInfo(gdata->jvmti, thread, TRACE_USER);
-    tagObjectWithId(gdata->jvmti, a, tinfo);
-    //deallocate(gdata->jvmti, tinfo);   
+    if (tinfo != NULL) {
+        tagObjectWithId(gdata->jvmti, a, tinfo);
+        (void) free((TraceInfo*) tinfo);
+    }
 }
 
 /**
@@ -793,7 +789,7 @@ parse_agent_options(char *options) {
  * @param vm
  * @param options
  * @param reserved
- * @return 
+ * @return
  */
 JNIEXPORT jint JNICALL
 Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
@@ -809,7 +805,8 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
     // allocation for global data
     (void) memset((void*) &data, 0, sizeof (data));
     gdata = &data;
-
+    gdata->serverHostname = "127.0.0.1";
+    gdata->port = 9000;
     // First thing we need to do is get the jvmtiEnv* or JVMTI environment
     res = (*vm)->GetEnv(vm, (void **) &jvmti, JVMTI_VERSION_1);
     if (res != JNI_OK) {
@@ -900,4 +897,3 @@ JNIEXPORT void JNICALL
 Agent_OnUnload(JavaVM *vm) {
     // VM is about to die anyway
 }
-
